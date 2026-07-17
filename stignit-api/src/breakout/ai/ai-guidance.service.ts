@@ -53,8 +53,8 @@ export class AiGuidanceService {
         .where(and(eq(incidentParticipants.incidentId, incidentId), eq(incidentParticipants.userId, userId)))
         .limit(1),
     );
-    if (!me || !membership || me.accessLevel === AccessLevel.OBSERVER) {
-      throw new ForbiddenException('AI guidance requires a Tier 1+ participant');
+    if (!me || !membership) {
+      throw new ForbiddenException('Join the breakout room to use AI guidance');
     }
 
     const skilledPresent = await this.hasVerifiedSkilledResponder(incidentId);
