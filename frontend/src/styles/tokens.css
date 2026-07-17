@@ -1,0 +1,313 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------- */
+/* Static brand palette — compiled into Tailwind utilities (bg-primary,   */
+/* text-accent, border-warning, etc). These do not change with theme.    */
+/* ---------------------------------------------------------------------- */
+@theme {
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Lora", Georgia, "Times New Roman", serif;
+
+  --color-primary: #b00020;
+  --color-primary-dark: #8c0019;
+  --color-primary-light: #fdebef;
+
+  --color-secondary: #d32f2f;
+  --color-secondary-light: #fdeeee;
+
+  --color-accent: #1976d2;
+  --color-accent-dark: #125ea8;
+  --color-accent-light: #e8f1fc;
+
+  --color-success: #2e7d32;
+  --color-success-light: #e8f5e9;
+
+  --color-warning: #f9a825;
+  --color-warning-light: #fff6e0;
+
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #292f3d;
+  --color-gray-900: #1a1a1a;
+
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-4xl: 2.5rem;
+
+  --shadow-soft: 0 2px 8px -2px rgb(15 23 42 / 0.06), 0 12px 28px -6px rgb(15 23 42 / 0.08);
+  --shadow-elevated: 0 4px 16px -4px rgb(15 23 42 / 0.1), 0 20px 48px -10px rgb(15 23 42 / 0.14);
+  --shadow-glow-primary: 0 12px 28px -6px rgb(176 0 32 / 0.35);
+  --shadow-glow-success: 0 12px 28px -6px rgb(46 125 50 / 0.3);
+
+  --animate-pulse-ring: pulse-ring 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+
+  @keyframes pulse-ring {
+    0% {
+      opacity: 0.55;
+      transform: scale(0.9);
+    }
+    70% {
+      opacity: 0;
+      transform: scale(1.9);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.9);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+/* Attribute-based dark mode: <html data-theme="dark">. Lets us drive the
+   variant from a JS-controlled store (system / light / dark) rather than
+   being locked to the OS media query. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------------------------------------------------------------------- */
+/* Adaptive semantic surfaces — these DO change between light/dark and    */
+/* are consumed via small utility classes below (not raw Tailwind color   */
+/* utilities, to avoid colliding with the static brand palette above).    */
+/* ---------------------------------------------------------------------- */
+:root {
+  --surface-canvas: var(--color-gray-50);
+  --surface-card: #ffffff;
+  --surface-card-elevated: #ffffff;
+  --surface-glass: rgb(255 255 255 / 0.72);
+  --surface-overlay: rgb(15 23 42 / 0.45);
+
+  --text-body: var(--color-gray-900);
+  --text-muted: var(--color-gray-500);
+  --text-faint: var(--color-gray-400);
+  --text-on-primary: #ffffff;
+
+  --border-subtle: var(--color-gray-200);
+  --border-strong: var(--color-gray-300);
+
+  --tint-primary: var(--color-primary-light);
+  --tint-accent: var(--color-accent-light);
+  --tint-success: var(--color-success-light);
+  --tint-warning: var(--color-warning-light);
+
+  --shadow-card: var(--shadow-soft);
+  --shadow-floating: var(--shadow-elevated);
+
+  /* Knowledge Library — warm editorial palette, distinct from the app's neutral surfaces */
+  --knowledge-top-bg: #fbf0e4;
+  --knowledge-top-text: #3d2b1f;
+  --knowledge-top-muted: #8a7460;
+  --knowledge-list-bg: #2a2118;
+  --knowledge-list-text: #f5ede3;
+  --knowledge-list-muted: #b5a695;
+  --knowledge-card-bg: #ffffff;
+  --knowledge-pill-bg: #ffffff;
+  --knowledge-pill-border: rgb(61 43 31 / 0.14);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --surface-canvas: #121212;
+  --surface-card: #1c1c1e;
+  --surface-card-elevated: #232326;
+  --surface-glass: rgb(28 28 30 / 0.72);
+  --surface-overlay: rgb(0 0 0 / 0.6);
+
+  --text-body: #f5f5f7;
+  --text-muted: #a1a1a6;
+  --text-faint: #6e6e73;
+  --text-on-primary: #ffffff;
+
+  --border-subtle: rgb(255 255 255 / 0.08);
+  --border-strong: rgb(255 255 255 / 0.16);
+
+  --tint-primary: rgb(176 0 32 / 0.18);
+  --tint-accent: rgb(25 118 210 / 0.2);
+  --tint-success: rgb(46 125 50 / 0.2);
+  --tint-warning: rgb(249 168 37 / 0.18);
+
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.05), 0 16px 32px -8px rgb(0 0 0 / 0.5);
+  --shadow-floating: 0 0 0 1px rgb(255 255 255 / 0.06), 0 24px 48px -12px rgb(0 0 0 / 0.6);
+
+  /* Knowledge Library — same warm character, tuned for dark mode */
+  --knowledge-top-bg: #241c15;
+  --knowledge-top-text: #f3e9dc;
+  --knowledge-top-muted: #b5a695;
+  --knowledge-list-bg: #171009;
+  --knowledge-list-text: #f3e9dc;
+  --knowledge-list-muted: #9c8c79;
+  --knowledge-card-bg: #2e251c;
+  --knowledge-pill-bg: #362b20;
+  --knowledge-pill-border: rgb(255 255 255 / 0.1);
+
+  color-scheme: dark;
+}
+
+@layer utilities {
+  .bg-canvas {
+    background-color: var(--surface-canvas);
+  }
+  .bg-card {
+    background-color: var(--surface-card);
+  }
+  .bg-card-elevated {
+    background-color: var(--surface-card-elevated);
+  }
+  .bg-glass {
+    background-color: var(--surface-glass);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+  }
+  .bg-overlay {
+    background-color: var(--surface-overlay);
+  }
+  .bg-tint-primary {
+    background-color: var(--tint-primary);
+  }
+  .bg-tint-accent {
+    background-color: var(--tint-accent);
+  }
+  .bg-tint-success {
+    background-color: var(--tint-success);
+  }
+  .bg-tint-warning {
+    background-color: var(--tint-warning);
+  }
+
+  .text-body {
+    color: var(--text-body);
+  }
+  .text-muted {
+    color: var(--text-muted);
+  }
+  .text-faint {
+    color: var(--text-faint);
+  }
+  .text-on-primary {
+    color: var(--text-on-primary);
+  }
+
+  .border-subtle {
+    border-color: var(--border-subtle);
+  }
+  .border-strong {
+    border-color: var(--border-strong);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-floating {
+    box-shadow: var(--shadow-floating);
+  }
+
+  .bg-knowledge-top {
+    background-color: var(--knowledge-top-bg);
+  }
+  .text-knowledge-top {
+    color: var(--knowledge-top-text);
+  }
+  .text-knowledge-top-muted {
+    color: var(--knowledge-top-muted);
+  }
+  .bg-knowledge-list {
+    background-color: var(--knowledge-list-bg);
+  }
+  .text-knowledge-list {
+    color: var(--knowledge-list-text);
+  }
+  .text-knowledge-list-muted {
+    color: var(--knowledge-list-muted);
+  }
+  .bg-knowledge-card {
+    background-color: var(--knowledge-card-bg);
+  }
+  .bg-knowledge-pill {
+    background-color: var(--knowledge-pill-bg);
+  }
+  .border-knowledge-pill {
+    border-color: var(--knowledge-pill-border);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Base resets                                                            */
+/* ---------------------------------------------------------------------- */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--surface-canvas);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  transition: background-color 0.25s ease;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+* {
+  border-color: var(--border-subtle);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+::selection {
+  background-color: var(--tint-primary);
+}
+
+/* Mobile viewport shell used by every screen to emulate a device frame in
+   the browser while remaining fully responsive down to real mobile widths. */
+.app-shell {
+  max-width: 480px;
+  margin-inline: auto;
+  min-height: 100dvh;
+  position: relative;
+  background-color: var(--surface-canvas);
+}
+
+.safe-top {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}

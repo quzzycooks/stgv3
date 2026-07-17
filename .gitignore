@@ -1,0 +1,15 @@
+# Preserved backend git history from before the monorepo merge — not meant to be tracked as files
+stignit-api/.git.previous-history-backup/
+
+# Safety net — real .env files should never be committed, only .env.example
+.env
+.env.local
+.env.*.local
+!*.env.example
+
+# Common
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
