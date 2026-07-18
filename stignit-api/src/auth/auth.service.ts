@@ -26,7 +26,7 @@ export class AuthService {
 
   async requestOtp(phone: string): Promise<OtpRequestResult> {
     const e164 = normalizeNigerianPhone(phone);
-    return this.otp.request(this.encryption.blindIndex(e164));
+    return this.otp.request(this.encryption.blindIndex(e164), e164);
   }
 
   async verifyOtp(phone: string, code: string): Promise<VerifyResult> {

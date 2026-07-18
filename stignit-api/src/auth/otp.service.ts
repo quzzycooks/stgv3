@@ -2,6 +2,7 @@ import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { REDIS_CLIENT } from '../redis/redis.module';
+import { TwilioVerifyService } from './twilio-verify.service';
 
 export interface OtpRequestResult {
   /** Only returned in non-production so tests / local dev can complete the flow. */
@@ -30,7 +31,10 @@ export class OtpService {
   private readonly lockSec = 900; // 15 min
   private readonly resendCooldownSec = 30;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    private readonly twilioVerify: TwilioVerifyService,
+  ) {}
 
   private otpKey(h: string) {
     return `otp:code:${h}`;
@@ -56,8 +60,8 @@ export class OtpService {
     return (await this.redis.exists(this.lockKey(phoneHash))) === 1;
   }
 
-  /** Issue a new OTP. Returns cooldown; throws if locked or on cooldown. */
-  async request(phoneHash: string): Promise<OtpRequestResult> {
+  /** Issue a new OTP and deliver it by SMS. Returns cooldown; throws if locked or on cooldown. */
+  async request(phoneHash: string, phone: string): Promise<OtpRequestResult> {
     if (await this.isLocked(phoneHash)) {
       const ttl = await this.redis.ttl(this.lockKey(phoneHash));
       return { resendInSec: Math.max(ttl, 0) };
@@ -78,7 +82,17 @@ export class OtpService {
     await this.redis.set(this.otpKey(phoneHash), this.hashCode(phoneHash, code), 'EX', this.ttlSec);
     await this.redis.del(this.attemptsKey(phoneHash)); // fresh attempt budget
 
-    // In production the code is delivered ONLY via SMS (Termii). Never logged.
+    try {
+      await this.twilioVerify.sendCode(phone, code);
+    } catch (err) {
+      // Delivery failed — undo the issue so the user can retry immediately
+      // rather than being stuck behind a cooldown for a code they never got.
+      await this.redis.del(this.otpKey(phoneHash), this.cooldownKey(phoneHash));
+      this.logger.error(`OTP SMS delivery failed: ${(err as Error).message}`);
+      throw err;
+    }
+
+    // In production the code is delivered ONLY via SMS (Twilio Verify). Never logged.
     const result: OtpRequestResult = { resendInSec: this.resendCooldownSec };
     if (process.env.NODE_ENV !== 'production') result.devCode = code;
     return result;
