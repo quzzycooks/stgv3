@@ -10,7 +10,6 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OtpService } from './otp.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TokenService } from './token.service';
-import { TwilioVerifyService } from './twilio-verify.service';
 
 /**
  * Global so guards/services are available app-wide. JwtAuthGuard is the app-wide
@@ -25,7 +24,6 @@ import { TwilioVerifyService } from './twilio-verify.service';
     AuthService,
     OtpService,
     TokenService,
-    TwilioVerifyService,
     JwtStrategy,
     JwtAuthGuard,
     AccessLevelGuard,

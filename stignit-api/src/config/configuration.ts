@@ -48,9 +48,6 @@ export default () => ({
   integrations: {
     sendchampApiKey: process.env.SENDCHAMP_API_KEY ?? '',
     sendchampSenderName: process.env.SENDCHAMP_SENDER_NAME ?? 'Sendchamp',
-    twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ?? '',
-    twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? '',
-    twilioVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID ?? '',
     fcmProjectId: process.env.FCM_PROJECT_ID ?? '',
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
     aiProvider: process.env.AI_PROVIDER ?? 'stub',

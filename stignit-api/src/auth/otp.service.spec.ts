@@ -1,6 +1,6 @@
 import { FakeRedis } from '../test-utils/fake-redis';
 import { OtpService } from './otp.service';
-import { TwilioVerifyService } from './twilio-verify.service';
+import { SmsService } from '../notification/sms.service';
 
 describe('OtpService', () => {
   let redis: FakeRedis;
@@ -12,9 +12,9 @@ describe('OtpService', () => {
     process.env.BLIND_INDEX_KEY = 'test-key';
     process.env.NODE_ENV = 'test';
     redis = new FakeRedis();
-    // No Twilio credentials configured — TwilioVerifyService takes its stub (no-network) path.
-    const verify = new TwilioVerifyService({ get: () => undefined } as any);
-    svc = new OtpService(redis as any, verify);
+    // No SENDCHAMP_API_KEY configured — SmsService takes its stub (no-network) path.
+    const sms = new SmsService({ get: () => undefined } as any);
+    svc = new OtpService(redis as any, sms);
   });
 
   it('issues a code and verifies it (single-use)', async () => {

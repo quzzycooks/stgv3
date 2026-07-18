@@ -49,9 +49,6 @@ export const envValidationSchema = Joi.object({
 
   SENDCHAMP_API_KEY: Joi.string().allow('').default(''),
   SENDCHAMP_SENDER_NAME: Joi.string().default('Sendchamp'),
-  TWILIO_ACCOUNT_SID: Joi.string().allow('').default(''),
-  TWILIO_AUTH_TOKEN: Joi.string().allow('').default(''),
-  TWILIO_VERIFY_SERVICE_SID: Joi.string().allow('').default(''),
   FCM_PROJECT_ID: Joi.string().allow('').default(''),
   GOOGLE_MAPS_API_KEY: Joi.string().allow('').default(''),
   AI_PROVIDER: Joi.string()
