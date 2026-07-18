@@ -18,6 +18,10 @@ import { cn } from "@/lib/cn";
  * the syntax and split into lines the UI can actually lay out, rather than
  * dumping the raw string (literal "**"/"-" and no line breaks) into a <div>.
  */
+function formatMessageTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 function formatAiAnswer(raw: string): { text: string; bullet: boolean }[] {
   return raw
     .split(/\r?\n/)
@@ -146,7 +150,7 @@ export function BreakoutRoomPage() {
             {messages?.map((message) => {
               const mine = message.senderUserId === userId;
               return (
-                <div key={message.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                <div key={message.id} className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
                   <div
                     className={cn(
                       "max-w-[78%] rounded-3xl px-4 py-2.5 text-sm",
@@ -160,6 +164,7 @@ export function BreakoutRoomPage() {
                     )}
                     <p>{message.content}</p>
                   </div>
+                  <span className="mt-1 px-1 text-[10px] text-faint">{formatMessageTime(message.createdAt)}</span>
                 </div>
               );
             })}
