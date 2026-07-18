@@ -36,8 +36,8 @@ export function BreakoutRoomPage() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.session?.userId);
   const [draft, setDraft] = useState("");
+  const [activeTab, setActiveTab] = useState<"chat" | "ai">("chat");
   const [roleSheetOpen, setRoleSheetOpen] = useState(false);
-  const [aiSheetOpen, setAiSheetOpen] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -106,13 +106,6 @@ export function BreakoutRoomPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setAiSheetOpen(true)}
-            aria-label="Ask AI Support Engine"
-            className="grid h-10 w-10 place-items-center rounded-full bg-tint-accent text-accent"
-          >
-            <Bot size={17} />
-          </button>
-          <button
             onClick={() => setRoleSheetOpen(true)}
             aria-label="Take a coordination role"
             className="grid h-10 w-10 place-items-center rounded-full bg-tint-success text-success"
@@ -122,68 +115,75 @@ export function BreakoutRoomPage() {
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex flex-col gap-2.5 overflow-y-auto px-5 py-4" style={{ height: "calc(100dvh - 220px)" }}>
-        {messages?.length === 0 && (
-          <p className="mt-10 text-center text-sm text-faint">No messages yet. Coordinate calmly — this room is moderated.</p>
-        )}
-        {messages?.map((message) => {
-          const mine = message.senderUserId === userId;
-          return (
-            <div key={message.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-              <div
-                className={cn(
-                  "max-w-[78%] rounded-3xl px-4 py-2.5 text-sm",
-                  mine ? "bg-primary text-white rounded-br-lg" : "bg-card-elevated border border-subtle text-body rounded-bl-lg",
-                )}
-              >
-                {message.senderRole && !mine && (
-                  <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
-                    {BREAKOUT_ROLE_LABEL[message.senderRole]}
-                  </p>
-                )}
-                <p>{message.content}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="safe-bottom flex items-center gap-2 border-t border-subtle bg-card px-4 py-3">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && draft.trim() && sendMessage.mutate(draft)}
-          placeholder="Message the room…"
-          className="h-12 flex-1 rounded-2xl border border-subtle bg-card-elevated px-4 text-[15px] text-body outline-none focus:border-accent"
-        />
+      <div className="flex gap-1.5 px-5 pt-3">
         <button
-          onClick={() => draft.trim() && sendMessage.mutate(draft)}
-          disabled={!draft.trim()}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary text-white disabled:opacity-40"
+          onClick={() => setActiveTab("chat")}
+          className={cn(
+            "flex-1 rounded-2xl py-2.5 text-sm font-semibold transition-colors",
+            activeTab === "chat" ? "bg-primary text-white" : "bg-card-elevated text-muted",
+          )}
         >
-          <Send size={18} />
+          Chat
+        </button>
+        <button
+          onClick={() => setActiveTab("ai")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-sm font-semibold transition-colors",
+            activeTab === "ai" ? "bg-primary text-white" : "bg-card-elevated text-muted",
+          )}
+        >
+          <Bot size={15} />
+          AI Support
         </button>
       </div>
 
-      <Sheet open={roleSheetOpen} onClose={() => setRoleSheetOpen(false)} title="Take a coordination role">
-        <div className="flex flex-col gap-2">
-          {BreakoutRole.map((role) => (
-            <button
-              key={role}
-              onClick={() => acceptRole.mutate(role)}
-              className="flex items-center gap-3 rounded-2xl border border-subtle bg-card-elevated px-4 py-3.5 text-left"
-            >
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-tint-accent text-accent">
-                <Shield size={15} />
-              </div>
-              <span className="font-semibold text-body text-sm">{BREAKOUT_ROLE_LABEL[role]}</span>
-            </button>
-          ))}
-        </div>
-      </Sheet>
+      {activeTab === "chat" ? (
+        <>
+          <div ref={scrollRef} className="flex flex-col gap-2.5 overflow-y-auto px-5 py-4" style={{ height: "calc(100dvh - 280px)" }}>
+            {messages?.length === 0 && (
+              <p className="mt-10 text-center text-sm text-faint">No messages yet. Coordinate calmly — this room is moderated.</p>
+            )}
+            {messages?.map((message) => {
+              const mine = message.senderUserId === userId;
+              return (
+                <div key={message.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                  <div
+                    className={cn(
+                      "max-w-[78%] rounded-3xl px-4 py-2.5 text-sm",
+                      mine ? "bg-primary text-white rounded-br-lg" : "bg-card-elevated border border-subtle text-body rounded-bl-lg",
+                    )}
+                  >
+                    {message.senderRole && !mine && (
+                      <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+                        {BREAKOUT_ROLE_LABEL[message.senderRole]}
+                      </p>
+                    )}
+                    <p>{message.content}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      <Sheet open={aiSheetOpen} onClose={() => setAiSheetOpen(false)} title="AI Support Engine">
-        <div className="flex flex-col gap-3">
+          <div className="safe-bottom flex items-center gap-2 border-t border-subtle bg-card px-4 py-3">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && draft.trim() && sendMessage.mutate(draft)}
+              placeholder="Message the room…"
+              className="h-12 flex-1 rounded-2xl border border-subtle bg-card-elevated px-4 text-[15px] text-body outline-none focus:border-accent"
+            />
+            <button
+              onClick={() => draft.trim() && sendMessage.mutate(draft)}
+              disabled={!draft.trim()}
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary text-white disabled:opacity-40"
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col gap-3 overflow-y-auto px-5 py-4" style={{ height: "calc(100dvh - 280px)" }}>
           <p className="rounded-2xl bg-tint-accent px-4 py-3 text-xs text-accent">
             Answers are safety-filtered — no dosage, diagnosis, or invasive-procedure guidance is ever given.
           </p>
@@ -207,6 +207,23 @@ export function BreakoutRoomPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      <Sheet open={roleSheetOpen} onClose={() => setRoleSheetOpen(false)} title="Take a coordination role">
+        <div className="flex flex-col gap-2">
+          {BreakoutRole.map((role) => (
+            <button
+              key={role}
+              onClick={() => acceptRole.mutate(role)}
+              className="flex items-center gap-3 rounded-2xl border border-subtle bg-card-elevated px-4 py-3.5 text-left"
+            >
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-tint-accent text-accent">
+                <Shield size={15} />
+              </div>
+              <span className="font-semibold text-body text-sm">{BREAKOUT_ROLE_LABEL[role]}</span>
+            </button>
+          ))}
         </div>
       </Sheet>
     </AppShell>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
+import { ConnectionBanner } from "./ConnectionBanner";
 import { FloatingSosButton } from "./FloatingSosButton";
 
 interface AppShellProps {
@@ -12,6 +13,7 @@ interface AppShellProps {
 export function AppShell({ children, showNav = true, showSos = true }: AppShellProps) {
   return (
     <div className="app-shell flex flex-col">
+      <ConnectionBanner />
       <div className={showNav ? "flex-1 pb-32" : "flex-1"}>{children}</div>
       {showSos && showNav && <FloatingSosButton />}
       {showNav && <BottomNav />}

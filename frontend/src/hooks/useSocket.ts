@@ -1,9 +1,18 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { io, type Socket } from "socket.io-client";
 import { env } from "@/lib/env";
 import { useAuthStore } from "@/stores/authStore";
 
 let sharedSocket: Socket | null = null;
+
+/** Connected by default so pages that never touch a socket don't show a false "reconnecting" state. */
+let connected = true;
+const statusListeners = new Set<() => void>();
+const setConnected = (value: boolean) => {
+  if (connected === value) return;
+  connected = value;
+  statusListeners.forEach((l) => l());
+};
 
 function getSocket(): Socket | null {
   const token = useAuthStore.getState().session?.accessToken;
@@ -15,8 +24,22 @@ function getSocket(): Socket | null {
       transports: ["websocket"],
       autoConnect: true,
     });
+    sharedSocket.on("connect", () => setConnected(true));
+    sharedSocket.on("disconnect", () => setConnected(false));
+    sharedSocket.on("connect_error", () => setConnected(false));
   }
   return sharedSocket;
+}
+
+/** True once a socket exists and has dropped connection — false otherwise (including "no socket yet"). */
+export function useSocketConnected(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      statusListeners.add(onChange);
+      return () => statusListeners.delete(onChange);
+    },
+    () => connected,
+  );
 }
 
 /**
