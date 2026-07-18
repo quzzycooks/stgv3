@@ -12,6 +12,24 @@ import { BreakoutRole, BREAKOUT_ROLE_LABEL } from "@/lib/enums";
 import type { BreakoutMessage } from "@/api/types";
 import { cn } from "@/lib/cn";
 
+/**
+ * The AI provider (Claude) returns markdown-ish prose — bold, bullet/numbered
+ * steps, blank-line paragraphs. There's no markdown renderer here, so strip
+ * the syntax and split into lines the UI can actually lay out, rather than
+ * dumping the raw string (literal "**"/"-" and no line breaks) into a <div>.
+ */
+function formatAiAnswer(raw: string): { text: string; bullet: boolean }[] {
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const bulletMatch = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+      const text = (bulletMatch ? bulletMatch[1] : line).replace(/\*\*(.+?)\*\*/g, "$1");
+      return { text, bullet: Boolean(bulletMatch) };
+    });
+}
+
 export function BreakoutRoomPage() {
   const { incidentId } = useParams<{ incidentId: string }>();
   const navigate = useNavigate();
@@ -179,7 +197,16 @@ export function BreakoutRoomPage() {
           <Button fullWidth loading={aiLoading} onClick={askAi} icon={<Bot size={16} />}>
             Ask
           </Button>
-          {aiAnswer && <div className="rounded-2xl bg-card-elevated border border-subtle p-4 text-sm text-body">{aiAnswer}</div>}
+          {aiAnswer && (
+            <div className="flex flex-col gap-2 rounded-2xl border border-subtle bg-card-elevated p-4 text-sm text-body">
+              {formatAiAnswer(aiAnswer).map((line, i) => (
+                <p key={i} className={cn(line.bullet && "pl-4 -indent-4")}>
+                  {line.bullet && "• "}
+                  {line.text}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       </Sheet>
     </AppShell>
