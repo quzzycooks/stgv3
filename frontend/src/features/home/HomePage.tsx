@@ -12,6 +12,7 @@ import {
   Radar,
   Siren,
   Navigation,
+  Play,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
@@ -99,6 +100,23 @@ export function HomePage() {
             </div>
           </div>
         </Card>
+
+        {/* Demo entry point — simulates a crash through the real detection pipeline,
+            no waiting required: Welfare Check's "I Need Help Now" skips the countdown
+            straight into a real Situation Room / Breakout Room. */}
+        <button
+          onClick={() => navigate("/detection-demo")}
+          className="mt-5 flex w-full items-center gap-4 rounded-3xl border-2 border-dashed border-[var(--border-strong)] bg-tint-primary p-4 text-left"
+        >
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary text-white">
+            <Play size={20} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-display font-bold text-body">Try the Live Demo</p>
+            <p className="text-xs text-muted">See the full response flow — no real crash needed</p>
+          </div>
+          <ChevronRight size={18} className="shrink-0 text-faint" />
+        </button>
 
         {/* Quick actions */}
         <div className="mt-5 grid grid-cols-4 gap-3">
