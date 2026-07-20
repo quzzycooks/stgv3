@@ -7,7 +7,8 @@ import { encryptField, blindIndex } from '../common/crypto/field-crypto';
  * One-off: creates the two seed author accounts + one commenter account that
  * drizzle/seed_articles.sql references by fixed UUID, upgraded to verified
  * MEDICAL_DOCTOR / NURSE_PARAMEDIC directly via SQL (same approach documented
- * in that file's header). Run once; not idempotent against re-running.
+ * in that file's header). full_name and date_of_birth are encrypted columns
+ * too (not just phone_number) — safe to re-run, upserts all three fields.
  */
 async function main() {
   const pool = new Pool({
@@ -45,18 +46,27 @@ async function main() {
   for (const u of seedUsers) {
     const encryptedPhone = encryptField(u.phone);
     const phoneHash = blindIndex(u.phone);
+    const encryptedFullName = encryptField(u.fullName);
+    const encryptedDob = encryptField(u.dob);
     await pool.query(
       `INSERT INTO users
          (id, phone_hash, phone_number, full_name, date_of_birth, access_level,
           professional_skill, skill_verification_status, skill_verified, account_status)
        VALUES ($1, $2, $3, $4, $5, 'TIER1', $6, $7, $8, 'ACTIVE')
-       ON CONFLICT (id) DO NOTHING`,
+       ON CONFLICT (id) DO UPDATE SET
+         phone_hash = excluded.phone_hash,
+         phone_number = excluded.phone_number,
+         full_name = excluded.full_name,
+         date_of_birth = excluded.date_of_birth,
+         professional_skill = excluded.professional_skill,
+         skill_verification_status = excluded.skill_verification_status,
+         skill_verified = excluded.skill_verified`,
       [
         u.id,
         phoneHash,
         encryptedPhone,
-        u.fullName,
-        u.dob,
+        encryptedFullName,
+        encryptedDob,
         u.skill,
         u.skill ? 'APPROVED' : 'NONE',
         Boolean(u.skill),
