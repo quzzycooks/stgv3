@@ -31,7 +31,7 @@ const TYPE_ICONS: Record<IncidentType, typeof Car> = {
 const TYPES: IncidentType[] = ["RTA", "MEDICAL_COLLAPSE", "FIRE", "DROWNING", "BUILDING_COLLAPSE", "CROWD_CRUSH", "UNKNOWN"];
 const COUNTDOWN_SECONDS = 5;
 
-type Stage = "select" | "confirm" | "counting" | "creating" | "error";
+type Stage = "select" | "role" | "confirm" | "counting" | "creating" | "error";
 
 export function SosPage() {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ export function SosPage() {
 
   const [stage, setStage] = useState<Stage>("select");
   const [selectedType, setSelectedType] = useState<IncidentType | null>(null);
-  const [reporterRole, setReporterRole] = useState<ReporterRole>("INVOLVED");
+  const [reporterRole, setReporterRole] = useState<ReporterRole | null>(null);
   const [remaining, setRemaining] = useState(COUNTDOWN_SECONDS);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ export function SosPage() {
   }, [stage, remaining]);
 
   const createIncident = async () => {
-    if (!selectedType || !gps) {
+    if (!selectedType || !reporterRole || !gps) {
       setError("Waiting for a GPS fix — please stay still for a moment.");
       setStage("error");
       return;
@@ -107,7 +107,7 @@ export function SosPage() {
                   whileTap={{ scale: 0.96 }}
                   onClick={() => {
                     setSelectedType(type);
-                    setStage("confirm");
+                    setStage("role");
                   }}
                   className="flex flex-col items-center gap-2.5 rounded-3xl border border-subtle bg-card-elevated p-5 shadow-card"
                 >
@@ -122,7 +122,49 @@ export function SosPage() {
         </div>
       )}
 
-      {stage === "confirm" && selectedType && (
+      {stage === "role" && selectedType && (
+        <div className="flex flex-1 flex-col px-6 pt-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="grid h-16 w-16 place-items-center rounded-4xl bg-tint-primary text-primary">
+              {(() => {
+                const Icon = TYPE_ICONS[selectedType];
+                return <Icon size={26} />;
+              })()}
+            </div>
+            <h2 className="mt-4 font-display text-xl font-bold text-body">Who are you in this?</h2>
+            <p className="mt-1.5 text-sm text-muted">This decides whether your emergency contacts get notified</p>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3">
+            {REPORTER_ROLE_OPTIONS.map((opt) => (
+              <motion.button
+                key={opt.value}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setReporterRole(opt.value);
+                  setStage("confirm");
+                }}
+                className="flex items-center gap-4 rounded-3xl border-2 border-subtle bg-card-elevated p-5 text-left"
+              >
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-tint-primary text-primary">
+                  <opt.icon size={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-display font-bold text-body">{opt.label}</p>
+                  <p className="mt-0.5 text-xs text-muted">{opt.hint}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          <div className="flex-1" />
+          <button onClick={() => setStage("select")} className="mb-6 text-center text-sm font-semibold text-muted">
+            Choose a different type
+          </button>
+        </div>
+      )}
+
+      {stage === "confirm" && selectedType && reporterRole && (
         <div className="flex flex-1 flex-col px-6 pt-6">
           <div className="flex flex-col items-center text-center">
             <div className="grid h-20 w-20 place-items-center rounded-4xl bg-tint-primary text-primary">
@@ -138,27 +180,8 @@ export function SosPage() {
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-2">
-            {REPORTER_ROLE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setReporterRole(opt.value)}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3.5 text-center transition-colors",
-                  reporterRole === opt.value
-                    ? "border-primary bg-tint-primary text-primary"
-                    : "border-subtle bg-card-elevated text-muted",
-                )}
-              >
-                <opt.icon size={18} />
-                <span className="text-xs font-bold">{opt.label}</span>
-                <span className="text-[10px] leading-tight text-faint">{opt.hint}</span>
-              </button>
-            ))}
-          </div>
-
           {reporterRole === "INVOLVED" && contacts && contacts.length > 0 && (
-            <div className="mt-4 rounded-2xl border border-subtle bg-card-elevated p-4">
+            <div className="mt-6 rounded-2xl border border-subtle bg-card-elevated p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-faint">Will be notified</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {contacts.map((c) => (
@@ -170,7 +193,7 @@ export function SosPage() {
             </div>
           )}
           {reporterRole === "WITNESS" && (
-            <p className="mt-4 text-center text-xs text-faint">
+            <p className="mt-6 text-center text-xs text-faint">
               Your emergency contacts won't be notified — a Situation Room still opens to coordinate help.
             </p>
           )}
