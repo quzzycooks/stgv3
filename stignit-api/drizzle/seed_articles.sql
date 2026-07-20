@@ -3,6 +3,11 @@
 -- MEDICAL_DOCTOR / NURSE_PARAMEDIC via SQL, matching the publish gate's
 -- real logic (proven separately via a live 403 test against a community
 -- member account before this file was written).
+--
+-- Run `npm run seed:knowledge-authors` first — it creates these three
+-- author/commenter accounts (fixed UUIDs referenced below) with properly
+-- encrypted phone fields. Running this file without it first will fail on
+-- the author_user_id foreign key. Applied to production 2026-07-20.
 
 INSERT INTO articles (title, summary, content, category, author_user_id, read_time_minutes, featured, reviewed) VALUES
 
