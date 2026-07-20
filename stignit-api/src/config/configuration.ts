@@ -48,6 +48,9 @@ export default () => ({
   integrations: {
     sendchampApiKey: process.env.SENDCHAMP_API_KEY ?? '',
     sendchampSenderName: process.env.SENDCHAMP_SENDER_NAME ?? 'Sendchamp',
+    otpDevApiKey: process.env.OTP_DEV_API_KEY ?? '',
+    otpDevTemplateId: process.env.OTP_DEV_TEMPLATE_ID ?? '',
+    otpDevSenderName: process.env.OTP_DEV_SENDER_NAME ?? 'OTP Dev',
     fcmProjectId: process.env.FCM_PROJECT_ID ?? '',
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
     aiProvider: process.env.AI_PROVIDER ?? 'stub',

@@ -49,6 +49,9 @@ export const envValidationSchema = Joi.object({
 
   SENDCHAMP_API_KEY: Joi.string().allow('').default(''),
   SENDCHAMP_SENDER_NAME: Joi.string().default('Sendchamp'),
+  OTP_DEV_API_KEY: Joi.string().allow('').default(''),
+  OTP_DEV_TEMPLATE_ID: Joi.string().allow('').default(''),
+  OTP_DEV_SENDER_NAME: Joi.string().default('OTP Dev'),
   FCM_PROJECT_ID: Joi.string().allow('').default(''),
   GOOGLE_MAPS_API_KEY: Joi.string().allow('').default(''),
   AI_PROVIDER: Joi.string()
