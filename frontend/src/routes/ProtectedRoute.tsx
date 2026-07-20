@@ -1,11 +1,19 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { usersApi } from "@/api/users";
 
 export function ProtectedRoute() {
   const session = useAuthStore((s) => s.session);
-  if (!session) return <Navigate to="/login" replace />;
+  const setRedirectAfterAuth = useAuthStore((s) => s.setRedirectAfterAuth);
+  const location = useLocation();
+
+  if (!session) {
+    // Remember where they were headed (e.g. a shared article link) so login/
+    // registration can drop them back there instead of the generic home screen.
+    setRedirectAfterAuth(location.pathname + location.search);
+    return <Navigate to="/login" replace />;
+  }
   if (!session.registrationComplete) return <Navigate to="/register/identity" replace />;
   return <Outlet />;
 }

@@ -42,7 +42,8 @@ export function ReviewStepPage() {
       updateAccessLevel(result.accessLevel as never);
       setRegistrationComplete(true);
       registration.reset();
-      navigate("/home", { replace: true });
+      const redirect = useAuthStore.getState().consumeRedirectAfterAuth() ?? "/home";
+      navigate(redirect, { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err, "We couldn't complete your registration. Please review your details."));
     } finally {

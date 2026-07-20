@@ -72,7 +72,10 @@ export function OtpVerifyPage() {
     }
   };
 
-  const routeAfterAuth = (registrationComplete: boolean) => (registrationComplete ? "/home" : "/register/identity");
+  const routeAfterAuth = (registrationComplete: boolean) => {
+    if (!registrationComplete) return "/register/identity";
+    return useAuthStore.getState().consumeRedirectAfterAuth() ?? "/home";
+  };
 
   const verify = async (fullCode: string) => {
     setError(null);
