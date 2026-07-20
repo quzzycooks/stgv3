@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bookmark, Clock, ShieldCheck, Flag, Trash2, Send, AlertCircle } from "lucide-react";
+import { ArrowLeft, Bookmark, Check, Clock, ShieldCheck, Flag, Trash2, Send, Share2, AlertCircle } from "lucide-react";
 import { knowledgeApi } from "@/api/knowledge";
 import { extractErrorMessage } from "@/api/client";
 import { useAuthStore } from "@/stores/authStore";
@@ -23,6 +23,7 @@ export function ArticleDetailPage() {
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+  const [shareCopied, setShareCopied] = useState(false);
 
   const { data: article, isLoading } = useQuery({
     queryKey: ["article", articleId],
@@ -76,23 +77,47 @@ export function ArticleDetailPage() {
 
   const canDeleteComment = (commentAuthorId: string) => currentUserId === commentAuthorId || currentUserId === article.author.userId;
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/knowledge/${articleId}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: article.title, text: article.summary, url });
+      } catch {
+        // User cancelled the share sheet — not an error.
+      }
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  };
+
   return (
     <div className="app-shell flex min-h-dvh flex-col bg-canvas">
       <div className="safe-top flex items-center justify-between px-6 pt-5">
         <button onClick={() => navigate(-1)} aria-label="Back" className="grid h-10 w-10 place-items-center rounded-full bg-card-elevated text-body">
           <ArrowLeft size={18} />
         </button>
-        <button
-          onClick={() => toggleSave.mutate()}
-          aria-label={article.saved ? "Unsave article" : "Save article"}
-          className={cn(
-            "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold",
-            article.saved ? "bg-primary text-white" : "bg-card-elevated text-body",
-          )}
-        >
-          <Bookmark size={15} fill={article.saved ? "currentColor" : "none"} />
-          {article.saveCount}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            aria-label="Share article"
+            className="grid h-10 w-10 place-items-center rounded-full bg-card-elevated text-body"
+          >
+            {shareCopied ? <Check size={16} className="text-success" /> : <Share2 size={16} />}
+          </button>
+          <button
+            onClick={() => toggleSave.mutate()}
+            aria-label={article.saved ? "Unsave article" : "Save article"}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold",
+              article.saved ? "bg-primary text-white" : "bg-card-elevated text-body",
+            )}
+          >
+            <Bookmark size={15} fill={article.saved ? "currentColor" : "none"} />
+            {article.saveCount}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 pb-40 pt-5">
