@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { DRIZZLE, type Db } from '../../database/drizzle.module';
-import { ActionType } from '../../database/enums';
+import { ActionType, ReporterRole } from '../../database/enums';
 import { emergencyContacts } from '../../database/schema';
 import { EventBus } from '../../messaging/event-bus.service';
 import { EventType, SituationRoomCreatedEvent } from '../../messaging/events';
@@ -29,6 +29,12 @@ export class ContactsNotificationSubscriber implements OnModuleInit {
 
   private async handle(event: SituationRoomCreatedEvent): Promise<void> {
     if (!event.triggeringUserId) return;
+    if (event.reporterRole === ReporterRole.WITNESS) {
+      // Bystander report — the triggering user isn't the one who may be hurt,
+      // so notifying their own emergency contacts would be alarming and wrong.
+      await this.actionLog.log(event.incidentId, ActionType.CONTACT_NOTIFIED, { count: 0, skippedReason: 'witness_report' });
+      return;
+    }
     const contacts = await this.db
       .select()
       .from(emergencyContacts)

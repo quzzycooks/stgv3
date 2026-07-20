@@ -1,6 +1,6 @@
 import { EventBus } from './event-bus.service';
 import { EventType, SituationRoomCreatedEvent } from './events';
-import { IncidentType } from '../database/enums';
+import { IncidentType, ReporterRole } from '../database/enums';
 
 describe('EventBus (failure isolation, PRD 8.2)', () => {
   const event: SituationRoomCreatedEvent = {
@@ -11,6 +11,7 @@ describe('EventBus (failure isolation, PRD 8.2)', () => {
     gps: { lat: 6.6, lng: 3.3 },
     occurredAt: new Date().toISOString(),
     observerMode: false,
+    reporterRole: ReporterRole.INVOLVED,
   };
 
   it('runs all subscribers even when one throws, and enqueues the failure', async () => {

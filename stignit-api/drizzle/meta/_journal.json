@@ -15,6 +15,13 @@
       "when": 1784318000000,
       "tag": "0001_knowledge_library",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784541888663,
+      "tag": "0002_reporter_role",
+      "breakpoints": true
     }
   ]
 }

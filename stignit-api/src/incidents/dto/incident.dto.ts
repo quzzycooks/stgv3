@@ -10,7 +10,7 @@ import {
   IsNumber,
   ValidateNested,
 } from 'class-validator';
-import { IncidentStatus, IncidentType } from '../../database/enums';
+import { IncidentStatus, IncidentType, ReporterRole } from '../../database/enums';
 
 export class GpsDto {
   @ApiProperty() @IsLatitude() lat: number;
@@ -25,6 +25,13 @@ export class ManualTriggerDto {
   @IsOptional()
   @IsISO8601()
   occurredAt?: string;
+  @ApiPropertyOptional({
+    enum: ReporterRole,
+    description: 'WITNESS = bystander reporting someone else; INVOLVED = reporting for self. Defaults to INVOLVED.',
+  })
+  @IsOptional()
+  @IsEnum(ReporterRole)
+  reporterRole?: ReporterRole;
 }
 
 export class ConfirmProximityDto {

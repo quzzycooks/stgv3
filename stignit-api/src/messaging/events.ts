@@ -1,4 +1,4 @@
-import { IncidentStatus, IncidentType } from '../database/enums';
+import { IncidentStatus, IncidentType, ReporterRole } from '../database/enums';
 
 /** Canonical event names on the bus (PRD 8.2). */
 export enum EventType {
@@ -18,6 +18,7 @@ export interface SituationRoomCreatedEvent {
   gps: { lat: number; lng: number; accuracyMeters?: number };
   occurredAt: string;
   observerMode: boolean; // true when created via escalation (no explicit NEED_HELP)
+  reporterRole: ReporterRole; // WITNESS = bystander; gates emergency-contact notification
 }
 
 export interface IncidentStatusChangedEvent {

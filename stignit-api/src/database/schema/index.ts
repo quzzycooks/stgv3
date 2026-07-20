@@ -29,6 +29,7 @@ import {
   IncidentType,
   InstitutionType,
   ProfessionalSkill,
+  ReporterRole,
   SkillVerificationStatus,
   TriggerType,
 } from '../enums';
@@ -42,6 +43,7 @@ export const accountStatusEnum = pgEnum('account_status_enum', vals(AccountStatu
 export const professionalSkillEnum = pgEnum('professional_skill_enum', vals(ProfessionalSkill));
 export const skillVerificationStatusEnum = pgEnum('skill_verification_status_enum', vals(SkillVerificationStatus));
 export const triggerTypeEnum = pgEnum('trigger_type_enum', vals(TriggerType));
+export const reporterRoleEnum = pgEnum('reporter_role_enum', vals(ReporterRole));
 export const incidentTypeEnum = pgEnum('incident_type_enum', vals(IncidentType));
 export const incidentStatusEnum = pgEnum('incident_status_enum', vals(IncidentStatus));
 export const breakoutRoleEnum = pgEnum('breakout_role_enum', vals(BreakoutRole));
@@ -104,6 +106,7 @@ export const incidents = pgTable('incidents', {
   incidentId: varchar('incident_id', { length: 26 }).primaryKey(),
   triggeringUserId: uuid('triggering_user_id'),
   triggerType: triggerTypeEnum('trigger_type').notNull(),
+  reporterRole: reporterRoleEnum('reporter_role').notNull().default(ReporterRole.INVOLVED),
   incidentType: incidentTypeEnum('incident_type').notNull(),
   status: incidentStatusEnum('status').notNull().default(IncidentStatus.ACTIVE),
   gpsLat: numeric('gps_lat', { precision: 9, scale: 6 }).notNull(),

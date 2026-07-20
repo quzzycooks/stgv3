@@ -12,6 +12,7 @@ import type {
   IncidentStatus,
   IncidentType,
   ProfessionalSkill,
+  ReporterRole,
   SkillVerificationStatus,
   TriggerType,
 } from "@/lib/enums";
@@ -116,12 +117,14 @@ export interface ManualTriggerInput {
   incidentType: IncidentType;
   gps: Gps;
   occurredAt?: string;
+  reporterRole?: ReporterRole;
 }
 
 export interface Incident {
   incidentId: string;
   triggeringUserId: string | null;
   triggerType: TriggerType;
+  reporterRole: ReporterRole;
   incidentType: IncidentType;
   status: IncidentStatus;
   gpsLat: string;

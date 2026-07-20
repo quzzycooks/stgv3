@@ -6,7 +6,7 @@ import { and, between, eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import type Redis from 'ioredis';
 import { DRIZZLE, type Db } from '../database/drizzle.module';
-import { ActionType, IncidentStatus, IncidentType, TriggerType } from '../database/enums';
+import { ActionType, IncidentStatus, IncidentType, ReporterRole, TriggerType } from '../database/enums';
 import { incidents, users, type Incident } from '../database/schema';
 import { first } from '../database/util';
 import { ActionLogService } from '../incidents/action-log.service';
@@ -129,6 +129,7 @@ export class WelfareCheckService {
       gps: session.gps,
       occurredAt: new Date(session.occurredAt),
       observerMode,
+      reporterRole: ReporterRole.INVOLVED,
     });
     await this.actionLog.log(incident.incidentId, ActionType.ESCALATION_STARTED, { observerMode });
     return incident;
@@ -195,6 +196,7 @@ export class WelfareCheckService {
       gps,
       occurredAt,
       observerMode: false,
+      reporterRole: ReporterRole.INVOLVED,
       syncedAt: now,
     });
     await this.actionLog.log(incident.incidentId, ActionType.ESCALATION_STARTED, {

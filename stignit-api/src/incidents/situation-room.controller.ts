@@ -9,7 +9,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthUser } from '../auth/decorators/current-user.decorator';
-import { TriggerType } from '../database/enums';
+import { ReporterRole, TriggerType } from '../database/enums';
 import {
   ConfirmProximityDto,
   ManualTriggerDto,
@@ -39,6 +39,7 @@ export class SituationRoomController {
       gps: dto.gps,
       occurredAt: dto.occurredAt ? new Date(dto.occurredAt) : new Date(),
       observerMode: false,
+      reporterRole: dto.reporterRole ?? ReporterRole.INVOLVED,
     });
     return { incidentId: incident.incidentId, status: incident.status };
   }

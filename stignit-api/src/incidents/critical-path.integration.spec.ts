@@ -1,4 +1,4 @@
-import { AccessLevel, IncidentType, TriggerType } from '../database/enums';
+import { AccessLevel, IncidentType, ReporterRole, TriggerType } from '../database/enums';
 import { EventBus } from '../messaging/event-bus.service';
 import { EventType } from '../messaging/events';
 import { FakeDb } from '../test-utils/fake-db';
@@ -59,6 +59,7 @@ describe('Critical path: welfare → situation room → fan-out (failure isolati
       gps: { lat: 6.6, lng: 3.3 },
       occurredAt: new Date(),
       observerMode: true,
+      reporterRole: ReporterRole.INVOLVED,
     });
 
     expect(incident.incidentId).toBe(incidentObj.incidentId);

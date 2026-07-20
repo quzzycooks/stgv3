@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { AlertTriangle, Building2, Car, Flame, HeartPulse, Users, Waves, X, MapPin } from "lucide-react";
+import { AlertTriangle, Building2, Car, Eye, Flame, HeartPulse, UserRound, Users, Waves, X, MapPin } from "lucide-react";
 import { SwipeToConfirm } from "@/components/ui/SwipeToConfirm";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { usersApi } from "@/api/users";
@@ -10,8 +10,13 @@ import { incidentsApi } from "@/api/incidents";
 import { extractErrorMessage } from "@/api/client";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useIncidentHistoryStore } from "@/stores/incidentHistoryStore";
-import { INCIDENT_TYPE_LABEL, type IncidentType } from "@/lib/enums";
+import { INCIDENT_TYPE_LABEL, type IncidentType, type ReporterRole } from "@/lib/enums";
 import { cn } from "@/lib/cn";
+
+const REPORTER_ROLE_OPTIONS: { value: ReporterRole; label: string; hint: string; icon: typeof Eye }[] = [
+  { value: "INVOLVED", label: "I'm involved", hint: "This is happening to me", icon: UserRound },
+  { value: "WITNESS", label: "I'm an observer", hint: "I'm reporting what I see", icon: Eye },
+];
 
 const TYPE_ICONS: Record<IncidentType, typeof Car> = {
   RTA: Car,
@@ -35,6 +40,7 @@ export function SosPage() {
 
   const [stage, setStage] = useState<Stage>("select");
   const [selectedType, setSelectedType] = useState<IncidentType | null>(null);
+  const [reporterRole, setReporterRole] = useState<ReporterRole>("INVOLVED");
   const [remaining, setRemaining] = useState(COUNTDOWN_SECONDS);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +65,12 @@ export function SosPage() {
     }
     setStage("creating");
     try {
-      const result = await incidentsApi.trigger({ incidentType: selectedType, gps, occurredAt: new Date().toISOString() });
+      const result = await incidentsApi.trigger({
+        incidentType: selectedType,
+        gps,
+        occurredAt: new Date().toISOString(),
+        reporterRole,
+      });
       addIncident(result.incidentId);
       navigate(`/incidents/${result.incidentId}`, { replace: true });
     } catch (err) {
@@ -127,8 +138,27 @@ export function SosPage() {
             </p>
           </div>
 
-          {contacts && contacts.length > 0 && (
-            <div className="mt-6 rounded-2xl border border-subtle bg-card-elevated p-4">
+          <div className="mt-6 grid grid-cols-2 gap-2">
+            {REPORTER_ROLE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setReporterRole(opt.value)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-2xl border-2 p-3.5 text-center transition-colors",
+                  reporterRole === opt.value
+                    ? "border-primary bg-tint-primary text-primary"
+                    : "border-subtle bg-card-elevated text-muted",
+                )}
+              >
+                <opt.icon size={18} />
+                <span className="text-xs font-bold">{opt.label}</span>
+                <span className="text-[10px] leading-tight text-faint">{opt.hint}</span>
+              </button>
+            ))}
+          </div>
+
+          {reporterRole === "INVOLVED" && contacts && contacts.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-subtle bg-card-elevated p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-faint">Will be notified</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {contacts.map((c) => (
@@ -138,6 +168,11 @@ export function SosPage() {
                 ))}
               </div>
             </div>
+          )}
+          {reporterRole === "WITNESS" && (
+            <p className="mt-4 text-center text-xs text-faint">
+              Your emergency contacts won't be notified — a Situation Room still opens to coordinate help.
+            </p>
           )}
 
           <div className="flex-1" />

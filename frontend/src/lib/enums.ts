@@ -39,6 +39,9 @@ export type IncidentType = (typeof IncidentType)[number];
 export const IncidentStatus = ["ACTIVE", "UNDER_CONTROL", "TRANSFERRED", "CLOSED", "FALSE_ALARM"] as const;
 export type IncidentStatus = (typeof IncidentStatus)[number];
 
+export const ReporterRole = ["WITNESS", "INVOLVED"] as const;
+export type ReporterRole = (typeof ReporterRole)[number];
+
 export const BreakoutRole = [
   "COORDINATOR",
   "MEDICAL_LEAD",

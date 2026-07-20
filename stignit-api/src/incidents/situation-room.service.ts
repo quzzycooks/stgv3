@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 import { and, eq, sql } from 'drizzle-orm';
 import { DRIZZLE, type Db } from '../database/drizzle.module';
-import { ActionType, IncidentStatus, IncidentType, TriggerType } from '../database/enums';
+import { ActionType, IncidentStatus, IncidentType, ReporterRole, TriggerType } from '../database/enums';
 import { incidentParticipants, incidents, type Incident, type IncidentParticipant } from '../database/schema';
 import { first } from '../database/util';
 import { EventBus } from '../messaging/event-bus.service';
@@ -22,6 +22,7 @@ export interface CreateSituationRoomInput {
   gps: { lat: number; lng: number; accuracyMeters?: number };
   occurredAt: Date;
   observerMode: boolean;
+  reporterRole: ReporterRole;
   syncedAt?: Date | null;
 }
 
@@ -67,6 +68,7 @@ export class SituationRoomService {
       gps: input.gps,
       occurredAt: input.occurredAt.toISOString(),
       observerMode: input.observerMode,
+      reporterRole: input.reporterRole,
     });
 
     await this.runProximity(incident, input.triggeringUserId ?? undefined);
@@ -79,9 +81,9 @@ export class SituationRoomService {
       try {
         await this.db.execute(sql`
           INSERT INTO incidents
-            (incident_id, triggering_user_id, trigger_type, incident_type, status,
+            (incident_id, triggering_user_id, trigger_type, reporter_role, incident_type, status,
              gps_lat, gps_lng, gps_accuracy_meters, geom, occurred_at, synced_at, created_at)
-          VALUES (${incidentId}, ${input.triggeringUserId}, ${input.triggerType}, ${input.incidentType}, 'ACTIVE',
+          VALUES (${incidentId}, ${input.triggeringUserId}, ${input.triggerType}, ${input.reporterRole}, ${input.incidentType}, 'ACTIVE',
              ${input.gps.lat}, ${input.gps.lng}, ${input.gps.accuracyMeters ?? null},
              ST_SetSRID(ST_MakePoint(${input.gps.lng}, ${input.gps.lat}),4326)::geography,
              ${input.occurredAt}, ${input.syncedAt ?? null}, now())

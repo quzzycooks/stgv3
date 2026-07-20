@@ -41,6 +41,19 @@ export enum TriggerType {
 }
 
 /**
+ * Whether the reporting user is personally involved in the incident or
+ * reporting as a bystander. Distinct from AccessLevel.OBSERVER (user tier),
+ * BreakoutRole.OBSERVER (breakout room role), and Incident.observerMode
+ * (auto-escalation without explicit confirmation) — unrelated concepts that
+ * happen to share the word "observer". Drives whether the triggering user's
+ * own emergency contacts are notified (WITNESS = no, INVOLVED = yes).
+ */
+export enum ReporterRole {
+  WITNESS = 'WITNESS',
+  INVOLVED = 'INVOLVED',
+}
+
+/**
  * PRD §9 Incident.incident_type is the source of truth.
  * NOTE (flagged): the design prototype and drill categories (6.2.5) include
  * FLOOD / CHILD / NIGHT which are NOT in the §9 enum. Following §9; FLOOD folded
