@@ -3,35 +3,46 @@ import { ConfigService } from '@nestjs/config';
 import { withRetry } from '../common/retry';
 
 export interface SmsResult {
-  provider: 'sendchamp';
+  provider: 'africastalking';
   messageId: string;
   status: 'sent' | 'failed';
 }
 
-const SENDCHAMP_SEND_URL = 'https://api.sendchamp.com/api/v1/sms/send';
+const AFRICASTALKING_SEND_URL = 'https://api.africastalking.com/version1/messaging';
 
-interface SendchampSendResponse {
-  status?: string;
-  message?: string;
-  // Confirmed against the live API: /sms/send returns no per-message id, only
-  // a validity count for the recipient list. A "success" envelope only means
-  // Sendchamp accepted and queued the request — it is NOT delivery confirmation.
-  data?: { business_id?: string; total_contacts?: number; valid_count?: number };
+interface AfricasTalkingRecipient {
+  number: string;
+  status: string;
+  statusCode: number;
+  cost?: string;
+  messageId?: string;
+}
+
+interface AfricasTalkingSendResponse {
+  SMSMessageData?: {
+    Message: string;
+    Recipients: AfricasTalkingRecipient[];
+  };
 }
 
 /**
- * Sendchamp SMS adapter (PRD 8.1 — reliable Nigerian SMS). All sends go through
- * withRetry (PRD 7.4). No secrets in code — API key comes from config/secrets.
+ * Africa's Talking SMS adapter (replaces Sendchamp — confirmed live 2026-07-20
+ * that Sendchamp's /sms/send reports "success" on every call while silently
+ * dropping delivery regardless of sender name or route; see git history on
+ * this file for that investigation).
  *
- * "dnd" route bypasses the Do-Not-Disturb registry so transactional codes still
- * reach DND-registered numbers — but ONLY for an approved Sender ID. Without
- * `SENDCHAMP_SENDER_NAME` configured to a registered sender, the request falls
- * back to the shared default name, which carriers silently drop on this route:
- * Sendchamp's API reports "success" (it queued the message) while the SMS never
- * actually reaches the phone. Confirmed live 2026-07-20 — verified against
- * real numbers reachable on-net, response was "success" with valid_count:1, no
- * SMS received. Get an approved Sender ID from the Sendchamp dashboard and set
- * SENDCHAMP_SENDER_NAME before relying on this for production OTP delivery.
+ * A 200 response here is NOT enough on its own to mean delivered — Africa's
+ * Talking can return HTTP 200 with an empty Recipients array and a top-level
+ * error message (e.g. "InvalidSenderId"). The only trustworthy success signal
+ * is a per-recipient statusCode of 100, which also comes with a real
+ * messageId and a real deducted cost — confirmed live against a real Nigerian
+ * number using the account's default sender (no `from` set).
+ *
+ * The custom "STIGNIT" alphanumeric sender ID is registered but not yet
+ * live (rejected with InvalidSenderId as of 2026-07-21) — likely still
+ * propagating through carrier approval. Once AFRICASTALKING_SENDER_ID is
+ * confirmed working, set it; until then this omits `from` entirely and uses
+ * the account's default shared sender, which is confirmed to deliver.
  */
 @Injectable()
 export class SmsService {
@@ -46,48 +57,40 @@ export class SmsService {
     }
     return withRetry(
       async () => {
-        const apiKey = this.config.get<string>('integrations.sendchampApiKey');
-        const senderName = this.config.get<string>('integrations.sendchampSenderName');
+        const apiKey = this.config.get<string>('integrations.africastalkingApiKey');
+        const username = this.config.get<string>('integrations.africastalkingUsername');
+        const senderId = this.config.get<string>('integrations.africastalkingSenderId');
         if (!apiKey) {
           // Dev/test: no provider configured — simulate a successful send.
           this.logger.debug(`[SMS stub] to=${to} body="${body.slice(0, 40)}…"`);
-          return { provider: 'sendchamp' as const, messageId: `stub-${Date.now()}`, status: 'sent' as const };
+          return { provider: 'africastalking' as const, messageId: `stub-${Date.now()}`, status: 'sent' as const };
         }
-        if (!senderName) {
-          this.logger.warn(
-            `SENDCHAMP_SENDER_NAME is not set — falling back to the shared default sender, which is ` +
-              `known to be silently dropped on the dnd route. to=${to}`,
+
+        const params = new URLSearchParams({ username: username || 'stignit', to, message: body });
+        if (senderId) params.set('from', senderId);
+
+        const res = await fetch(AFRICASTALKING_SEND_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Accept: 'application/json',
+            apiKey,
+          },
+          body: params.toString(),
+        });
+
+        const data = (await res.json().catch(() => ({}))) as AfricasTalkingSendResponse;
+        const recipient = data.SMSMessageData?.Recipients?.[0];
+        if (!res.ok || !recipient || recipient.statusCode !== 100) {
+          throw new Error(
+            `Africa's Talking send failed (${res.status}): ${recipient?.status ?? data.SMSMessageData?.Message ?? JSON.stringify(data)}`,
           );
         }
 
-        const res = await fetch(SENDCHAMP_SEND_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            to: [to],
-            message: body,
-            sender_name: senderName || 'Sendchamp',
-            route: 'dnd',
-          }),
-        });
-
-        const data = (await res.json().catch(() => ({}))) as SendchampSendResponse;
-        const validCount = data.data?.valid_count;
-        if (!res.ok || (data.status && data.status !== 'success') || validCount === 0) {
-          throw new Error(`Sendchamp send failed (${res.status}): ${data.message ?? JSON.stringify(data)}`);
-        }
-
-        // No per-message id is available from this endpoint (see class doc) — log
-        // the full envelope so a delivery dispute can at least be timestamp-matched
-        // against Sendchamp's own logs.
-        this.logger.debug(`[SMS] to=${to} accepted=${JSON.stringify(data.data)}`);
+        this.logger.debug(`[SMS] to=${to} messageId=${recipient.messageId} cost=${recipient.cost}`);
         return {
-          provider: 'sendchamp' as const,
-          messageId: data.data?.business_id ? `${data.data.business_id}:${Date.now()}` : `sendchamp-${Date.now()}`,
+          provider: 'africastalking' as const,
+          messageId: recipient.messageId ?? `africastalking-${Date.now()}`,
           status: 'sent' as const,
         };
       },

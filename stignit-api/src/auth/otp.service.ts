@@ -2,7 +2,7 @@ import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { REDIS_CLIENT } from '../redis/redis.module';
-import { OtpDevService } from '../notification/otp-dev.service';
+import { SmsService } from '../notification/sms.service';
 
 export interface OtpRequestResult {
   /** Only returned in non-production so tests / local dev can complete the flow. */
@@ -33,7 +33,7 @@ export class OtpService {
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    private readonly otpDev: OtpDevService,
+    private readonly sms: SmsService,
   ) {}
 
   private otpKey(h: string) {
@@ -83,7 +83,7 @@ export class OtpService {
     await this.redis.del(this.attemptsKey(phoneHash)); // fresh attempt budget
 
     try {
-      await this.otpDev.sendCode(phone, code);
+      await this.sms.send(phone, `Your Stignit verification code is ${code}. It expires in 5 minutes.`);
     } catch (err) {
       // Delivery failed — undo the issue so the user can retry immediately
       // rather than being stuck behind a cooldown for a code they never got.
@@ -92,7 +92,7 @@ export class OtpService {
       throw err;
     }
 
-    // In production the code is delivered ONLY via SMS (otp.dev). Never logged.
+    // In production the code is delivered ONLY via SMS (Africa's Talking). Never logged.
     const result: OtpRequestResult = { resendInSec: this.resendCooldownSec };
     if (process.env.NODE_ENV !== 'production') result.devCode = code;
     return result;

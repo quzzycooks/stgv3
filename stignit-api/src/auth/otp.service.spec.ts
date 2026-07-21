@@ -1,6 +1,6 @@
 import { FakeRedis } from '../test-utils/fake-redis';
 import { OtpService } from './otp.service';
-import { OtpDevService } from '../notification/otp-dev.service';
+import { SmsService } from '../notification/sms.service';
 
 describe('OtpService', () => {
   let redis: FakeRedis;
@@ -12,9 +12,9 @@ describe('OtpService', () => {
     process.env.BLIND_INDEX_KEY = 'test-key';
     process.env.NODE_ENV = 'test';
     redis = new FakeRedis();
-    // No OTP_DEV_API_KEY configured — OtpDevService takes its stub (no-network) path.
-    const otpDev = new OtpDevService({ get: () => undefined } as any);
-    svc = new OtpService(redis as any, otpDev);
+    // No AFRICASTALKING_API_KEY configured — SmsService takes its stub (no-network) path.
+    const sms = new SmsService({ get: () => undefined } as any);
+    svc = new OtpService(redis as any, sms);
   });
 
   it('issues a code and verifies it (single-use)', async () => {
