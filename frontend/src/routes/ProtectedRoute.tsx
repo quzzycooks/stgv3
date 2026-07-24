@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { usersApi } from "@/api/users";
+import { AmbientCrashDetection } from "@/features/detection/AmbientCrashDetection";
 
 export function ProtectedRoute() {
   const session = useAuthStore((s) => s.session);
@@ -15,7 +16,12 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
   if (!session.registrationComplete) return <Navigate to="/register/identity" replace />;
-  return <Outlet />;
+  return (
+    <>
+      <AmbientCrashDetection />
+      <Outlet />
+    </>
+  );
 }
 
 export function PublicOnlyRoute() {
