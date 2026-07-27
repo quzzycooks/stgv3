@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/Badge";
 import { usersApi } from "@/api/users";
 import { extractErrorMessage } from "@/api/client";
 import { contactSchema, type ContactFormValues } from "@/lib/schemas/registration";
-import { toE164, formatNigerianPhone } from "@/lib/schemas/auth";
+import { toE164, formatNigerianPhone, phoneDigits } from "@/lib/schemas/auth";
 
 const MAX_CONTACTS = 4;
+const DUPLICATE_PHONE_ERROR = "This number is already saved as an emergency contact.";
 
 export function ContactsPage() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export function ContactsPage() {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<ContactFormValues>({ resolver: zodResolver(contactSchema) });
 
@@ -45,8 +47,27 @@ export function ContactsPage() {
       setSheetOpen(false);
       setFormError(null);
     },
-    onError: (err) => setFormError(extractErrorMessage(err, "Couldn't add this contact.")),
+    onError: (err) => {
+      const message = extractErrorMessage(err, "Couldn't add this contact.");
+      // Backend is the source of truth for the duplicate check (race conditions,
+      // contacts added on another device) — surface it on the field either way.
+      if (message === DUPLICATE_PHONE_ERROR) {
+        setError("localNumber", { type: "manual", message });
+      } else {
+        setFormError(message);
+      }
+    },
   });
+
+  const onSubmit = (values: ContactFormValues) => {
+    const phone = toE164(values.localNumber);
+    const isDuplicate = (contacts ?? []).some((c) => phoneDigits(c.phoneNumber) === phoneDigits(phone));
+    if (isDuplicate) {
+      setError("localNumber", { type: "manual", message: DUPLICATE_PHONE_ERROR });
+      return;
+    }
+    addContact.mutate(values);
+  };
 
   const deleteContact = useMutation({
     mutationFn: (contactId: string) => usersApi.deleteEmergencyContact(contactId),
@@ -124,7 +145,7 @@ export function ContactsPage() {
       </div>
 
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Add emergency contact">
-        <form onSubmit={handleSubmit((v) => addContact.mutate(v))} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <Input label="Full name" placeholder="Chinedu Okafor" error={errors.name?.message} {...register("name")} />
           <Input
             label="Phone number"
