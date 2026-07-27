@@ -13,6 +13,11 @@ export const otpSchema = z.object({
 });
 export type OtpFormValues = z.infer<typeof otpSchema>;
 
+export const emailSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+});
+export type EmailFormValues = z.infer<typeof emailSchema>;
+
 export function toE164(localNumber: string): string {
   return `+234${localNumber}`;
 }
@@ -21,4 +26,9 @@ export function formatNigerianPhone(e164: string): string {
   // +2348012345678 -> 0801 234 5678
   const digits = e164.replace("+234", "0");
   return digits.replace(/^(\d{4})(\d{3})(\d{4})$/, "$1 $2 $3");
+}
+
+/** Strip everything but digits, for comparing phone numbers regardless of formatting. */
+export function phoneDigits(phone: string): string {
+  return phone.replace(/\D/g, "");
 }

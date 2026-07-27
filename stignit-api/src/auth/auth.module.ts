@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { EmailOtpService } from './email-otp.service';
 import { AccessLevelGuard } from './guards/access-level.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OtpService } from './otp.service';
@@ -23,6 +24,7 @@ import { TokenService } from './token.service';
   providers: [
     AuthService,
     OtpService,
+    EmailOtpService,
     TokenService,
     JwtStrategy,
     JwtAuthGuard,
@@ -30,6 +32,6 @@ import { TokenService } from './token.service';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: AccessLevelGuard },
   ],
-  exports: [AuthService, OtpService, TokenService, JwtAuthGuard, AccessLevelGuard],
+  exports: [AuthService, OtpService, EmailOtpService, TokenService, JwtAuthGuard, AccessLevelGuard],
 })
 export class AuthModule {}

@@ -49,6 +49,8 @@ export default () => ({
     africastalkingApiKey: process.env.AFRICASTALKING_API_KEY ?? '',
     africastalkingUsername: process.env.AFRICASTALKING_USERNAME ?? 'stignit',
     africastalkingSenderId: process.env.AFRICASTALKING_SENDER_ID ?? '',
+    resendApiKey: process.env.RESEND_API_KEY ?? '',
+    resendFromEmail: process.env.RESEND_FROM_EMAIL ?? 'Stignit <no-reply@stignit.ng>',
     fcmProjectId: process.env.FCM_PROJECT_ID ?? '',
     googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
     aiProvider: process.env.AI_PROVIDER ?? 'stub',
