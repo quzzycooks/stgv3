@@ -90,7 +90,8 @@ export interface UpdateProfileInput {
 
 export interface UserProfile {
   id: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
+  email: string | null;
   fullName: string;
   dateOfBirth: string;
   stateLga: string;

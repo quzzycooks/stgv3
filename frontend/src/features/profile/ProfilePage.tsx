@@ -96,7 +96,9 @@ export function ProfilePage() {
           <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={onPickPhoto} />
           <div className="min-w-0 flex-1">
             <p className="truncate font-display text-lg font-bold text-body">{profile?.fullName}</p>
-            <p className="text-xs text-muted">{profile ? formatNigerianPhone(profile.phoneNumber) : ""}</p>
+            <p className="text-xs text-muted">
+              {profile?.phoneNumber ? formatNigerianPhone(profile.phoneNumber) : (profile?.email ?? "")}
+            </p>
             <p className="text-xs text-faint">{profile?.stateLga}</p>
           </div>
           <button onClick={openEdit} aria-label="Edit profile" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-tint-accent text-accent">
