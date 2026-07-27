@@ -4,6 +4,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { usersApi } from "@/api/users";
 import { AmbientCrashDetection } from "@/features/detection/AmbientCrashDetection";
 
+function RouteLoadingSpinner() {
+  return (
+    <div className="app-shell flex min-h-dvh items-center justify-center bg-canvas">
+      <div className="h-9 w-9 animate-spin rounded-full border-4 border-[var(--border-subtle)] border-t-primary" />
+    </div>
+  );
+}
+
 export function ProtectedRoute() {
   const session = useAuthStore((s) => s.session);
   const setRedirectAfterAuth = useAuthStore((s) => s.setRedirectAfterAuth);
@@ -50,7 +58,7 @@ export function RegistrationRoute() {
   });
 
   if (!session) return <Navigate to="/login" replace />;
-  if (isLoading) return null;
+  if (isLoading) return <RouteLoadingSpinner />;
 
   if (profile && profile.accountStatus !== "INCOMPLETE") {
     setRegistrationComplete(true);
