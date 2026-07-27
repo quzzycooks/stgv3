@@ -51,7 +51,7 @@ export const envValidationSchema = Joi.object({
   AFRICASTALKING_USERNAME: Joi.string().default('stignit'),
   AFRICASTALKING_SENDER_ID: Joi.string().allow('').default(''),
   RESEND_API_KEY: Joi.string().allow('').default(''),
-  RESEND_FROM_EMAIL: Joi.string().allow('').default('Stignit <no-reply@stignit.ng>'),
+  RESEND_FROM_EMAIL: Joi.string().allow('').default('Stignit <no-reply@stignit.com>'),
   FCM_PROJECT_ID: Joi.string().allow('').default(''),
   GOOGLE_MAPS_API_KEY: Joi.string().allow('').default(''),
   AI_PROVIDER: Joi.string()
