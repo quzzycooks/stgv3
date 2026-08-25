@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useRegistrationStore } from "@/stores/registrationStore";
 import { contactSchema, type ContactFormValues } from "@/lib/schemas/registration";
-import { toE164 } from "@/lib/schemas/auth";
+import { toE164, phoneDigits } from "@/lib/schemas/auth";
 import type { EmergencyContactInput } from "@/api/types";
+
+const DUPLICATE_PHONE_ERROR = "This number is already saved as an emergency contact.";
 
 const MIN_CONTACTS = 2;
 const MAX_CONTACTS = 4;
@@ -25,13 +27,21 @@ export function ContactsStepPage() {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<ContactFormValues>({ resolver: zodResolver(contactSchema) });
 
   const addContact = (values: ContactFormValues) => {
+    const phone = toE164(values.localNumber);
+    const isDuplicate = emergencyContacts.some((c) => phoneDigits(c.phone) === phoneDigits(phone));
+    if (isDuplicate) {
+      setError("localNumber", { type: "manual", message: DUPLICATE_PHONE_ERROR });
+      return;
+    }
+
     const next: EmergencyContactInput = {
       name: values.name,
-      phone: toE164(values.localNumber),
+      phone,
       relationship: values.relationship,
       priority: emergencyContacts.length + 1,
     };

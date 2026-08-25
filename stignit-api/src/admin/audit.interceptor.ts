@@ -34,7 +34,7 @@ export class AuditInterceptor implements NestInterceptor {
   /** Never store raw PII/credentials in the audit log. */
   private redact(body: Record<string, unknown> = {}): Record<string, unknown> {
     const clone = { ...body };
-    for (const k of ['documentUrl', 'phone', 'phoneNumber', 'fullName', 'medicalInfo']) {
+    for (const k of ['documentUrl', 'phone', 'phoneNumber', 'email', 'fullName', 'medicalInfo']) {
       if (k in clone) clone[k] = '[redacted]';
     }
     return clone;

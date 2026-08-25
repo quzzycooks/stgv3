@@ -29,6 +29,8 @@ export class UsersMaintenanceService {
         .set({
           phoneNumber: 'DELETED',
           phoneHash: `deleted-${id}`.slice(0, 64).padEnd(64, '0'),
+          email: 'DELETED',
+          emailHash: `deleted-${id}-em`.slice(0, 64).padEnd(64, '0'),
           fullName: 'DELETED',
           dateOfBirth: 'DELETED',
           stateLga: null,

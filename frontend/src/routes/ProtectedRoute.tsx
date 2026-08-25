@@ -2,6 +2,15 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { usersApi } from "@/api/users";
+import { AmbientCrashDetection } from "@/features/detection/AmbientCrashDetection";
+
+function RouteLoadingSpinner() {
+  return (
+    <div className="app-shell flex min-h-dvh items-center justify-center bg-canvas">
+      <div className="h-9 w-9 animate-spin rounded-full border-4 border-[var(--border-subtle)] border-t-primary" />
+    </div>
+  );
+}
 
 export function ProtectedRoute() {
   const session = useAuthStore((s) => s.session);
@@ -15,7 +24,12 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
   if (!session.registrationComplete) return <Navigate to="/register/identity" replace />;
-  return <Outlet />;
+  return (
+    <>
+      <AmbientCrashDetection />
+      <Outlet />
+    </>
+  );
 }
 
 export function PublicOnlyRoute() {
@@ -44,7 +58,7 @@ export function RegistrationRoute() {
   });
 
   if (!session) return <Navigate to="/login" replace />;
-  if (isLoading) return null;
+  if (isLoading) return <RouteLoadingSpinner />;
 
   if (profile && profile.accountStatus !== "INCOMPLETE") {
     setRegistrationComplete(true);

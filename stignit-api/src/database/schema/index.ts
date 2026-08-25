@@ -63,8 +63,12 @@ const ts = (name: string) => timestamp(name, { withTimezone: true });
 // --- users ---
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  phoneHash: char('phone_hash', { length: 64 }).notNull().unique(),
-  phoneNumber: encryptedText('phone_number').notNull(),
+  // Nullable: an account is created via phone OTP or email OTP (PRD 6.1.1 alt.
+  // flow), so exactly one of the two identifier pairs is populated at signup.
+  phoneHash: char('phone_hash', { length: 64 }).unique(),
+  phoneNumber: encryptedText('phone_number'),
+  emailHash: char('email_hash', { length: 64 }).unique(),
+  email: encryptedText('email'),
   fullName: encryptedText('full_name').notNull(),
   dateOfBirth: encryptedText('date_of_birth').notNull(),
   stateLga: varchar('state_lga', { length: 100 }),

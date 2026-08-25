@@ -23,6 +23,8 @@ export function SplashPage() {
       } else if (session) {
         navigate("/register/identity", { replace: true });
       } else if (!onboardingComplete) {
+        // No active session and they haven't dismissed onboarding before (Skip or
+        // Get Started) — show what Stignit is every time until they do.
         navigate("/onboarding", { replace: true });
       } else {
         navigate("/login", { replace: true });

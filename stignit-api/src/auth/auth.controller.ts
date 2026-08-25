@@ -3,7 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
-import { RefreshDto, RequestOtpDto, VerifyOtpDto } from './dto/auth.dto';
+import { RefreshDto, RequestEmailOtpDto, RequestOtpDto, VerifyEmailOtpDto, VerifyOtpDto } from './dto/auth.dto';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -27,6 +27,25 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify OTP; returns JWT access + refresh (PRD 10.1 /auth/otp/verify)' })
   verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.auth.verifyOtp(dto.phone, dto.code);
+  }
+
+  @Public()
+  @Post('otp/email/request')
+  @HttpCode(200)
+  // Same per-IP shape as phone OTP, to blunt email-bombing.
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @ApiOperation({ summary: 'Request an OTP via email (alternative to phone OTP, PRD 6.1.1 alt. flow)' })
+  requestEmailOtp(@Body() dto: RequestEmailOtpDto) {
+    return this.auth.requestEmailOtp(dto.email);
+  }
+
+  @Public()
+  @Post('otp/email/verify')
+  @HttpCode(200)
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @ApiOperation({ summary: 'Verify email OTP; returns JWT access + refresh' })
+  verifyEmailOtp(@Body() dto: VerifyEmailOtpDto) {
+    return this.auth.verifyEmailOtp(dto.email, dto.code);
   }
 
   @Public()

@@ -12,8 +12,12 @@ import { formatNigerianPhone } from "@/lib/schemas/auth";
 import { isPlatformAuthenticatorAvailable, hasQuickUnlockCredential, registerQuickUnlock } from "@/lib/webauthn";
 import { useUiStore } from "@/stores/uiStore";
 
+type Channel = "phone" | "email";
+
 interface LocationState {
-  phone: string;
+  channel?: Channel; // absent = "phone", for callers written before email OTP existed
+  phone?: string;
+  email?: string;
   resendInSec: number;
   devCode?: string;
 }
@@ -34,8 +38,11 @@ export function OtpVerifyPage() {
   const setSession = useAuthStore((s) => s.setSession);
   const setQuickUnlockEnabled = useUiStore((s) => s.setQuickUnlockEnabled);
 
+  const channel: Channel = locationState?.channel ?? "phone";
+  const identifier = channel === "phone" ? locationState?.phone : locationState?.email;
+
   useEffect(() => {
-    if (!locationState?.phone) {
+    if (!identifier) {
       navigate("/login", { replace: true });
       return;
     }
@@ -44,8 +51,9 @@ export function OtpVerifyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!locationState?.phone) return null;
-  const { phone, devCode } = locationState;
+  if (!identifier) return null;
+  const { devCode } = locationState!;
+  const displayIdentifier = channel === "phone" ? formatNigerianPhone(identifier) : identifier;
 
   const code = digits.join("");
 
@@ -81,7 +89,8 @@ export function OtpVerifyPage() {
     setError(null);
     setVerifying(true);
     try {
-      const result = await authApi.verifyOtp(phone, fullCode);
+      const result =
+        channel === "phone" ? await authApi.verifyOtp(identifier, fullCode) : await authApi.verifyEmailOtp(identifier, fullCode);
       setSession({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
@@ -109,7 +118,7 @@ export function OtpVerifyPage() {
 
   const handleResend = async () => {
     try {
-      const result = await authApi.requestOtp(phone);
+      const result = channel === "phone" ? await authApi.requestOtp(identifier) : await authApi.requestEmailOtp(identifier);
       resend.cancel();
       resend.start();
       setDigits(Array(6).fill(""));
@@ -123,7 +132,7 @@ export function OtpVerifyPage() {
   const enableUnlock = async () => {
     const session = useAuthStore.getState().session;
     if (session) {
-      const ok = await registerQuickUnlock(session.userId, phone);
+      const ok = await registerQuickUnlock(session.userId, identifier);
       if (ok) setQuickUnlockEnabled(true);
     }
     setOfferUnlock(false);
@@ -145,7 +154,7 @@ export function OtpVerifyPage() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 26 }}>
           <h1 className="font-display text-[26px] font-extrabold leading-tight text-body">Enter verification code</h1>
           <p className="mt-2 text-[15px] text-muted">
-            We sent a 6-digit code to <span className="font-semibold text-body">{formatNigerianPhone(phone)}</span>
+            We sent a 6-digit code to <span className="font-semibold text-body">{displayIdentifier}</span>
           </p>
 
           {devCode && (

@@ -40,16 +40,31 @@ export class EmergencyContactsService {
     if (Number(existing) + inputs.length > 4) {
       throw new BadRequestException('Maximum 4 emergency contacts');
     }
+
+    // Duplicate check: same normalized number can't be saved twice for one user,
+    // whether it already exists or appears more than once in this same batch.
+    const existingRows = await this.db
+      .select({ phoneHash: emergencyContacts.phoneHash })
+      .from(emergencyContacts)
+      .where(eq(emergencyContacts.userId, userId));
+    const seenHashes = new Set(existingRows.map((c) => c.phoneHash));
+
     const rows: EmergencyContact[] = [];
     for (const [i, input] of inputs.entries()) {
       const e164 = normalizeNigerianPhone(input.phone);
+      const phoneHash = this.encryption.blindIndex(e164);
+      if (seenHashes.has(phoneHash)) {
+        throw new BadRequestException('This number is already saved as an emergency contact.');
+      }
+      seenHashes.add(phoneHash);
+
       const [row] = await this.db
         .insert(emergencyContacts)
         .values({
           userId,
           name: input.name,
           phoneNumber: e164,
-          phoneHash: this.encryption.blindIndex(e164),
+          phoneHash,
           relationship: input.relationship,
           priority: input.priority ?? Number(existing) + i + 1,
           verified: false,

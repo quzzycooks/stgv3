@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface UiState {
+  /** Set once the user explicitly dismisses onboarding (Skip, or finishing the slides) — until then, Splash shows it every time. */
   onboardingComplete: boolean;
   completeOnboarding: () => void;
   quickUnlockEnabled: boolean;
