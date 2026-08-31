@@ -35,6 +35,10 @@ export class InstitutionalService {
       await this.db.select().from(incidents).where(eq(incidents.incidentId, incidentId)).limit(1),
     );
     if (!incident) return { dispatched: 0 };
+    if (incident.gpsLat === null || incident.gpsLng === null) {
+      this.logger.warn(`Skipping institutional dispatch for ${incidentId}: no GPS on record`);
+      return { dispatched: 0 };
+    }
 
     const [[{ confirmed }], [{ flagged }]] = await Promise.all([
       this.db

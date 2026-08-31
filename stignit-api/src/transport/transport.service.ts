@@ -121,7 +121,7 @@ export class TransportService {
     await this.db.update(drivers).set({ status: DriverStatus.DISPATCHED }).where(eq(drivers.id, driverId));
 
     let hospitalId: string | null = null;
-    if (incident) {
+    if (incident && incident.gpsLat !== null && incident.gpsLng !== null) {
       const rec = await this.hospitals.recommend(parseFloat(incident.gpsLat), parseFloat(incident.gpsLng), {
         needsCardiac: incident.incidentType === IncidentType.MEDICAL_COLLAPSE,
       });

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Post,
   UseGuards,
@@ -18,25 +19,32 @@ import {
 } from './dto/incident.dto';
 import { IncidentAccessGuard } from './incident-access.guard';
 import { ProximityService } from './proximity.service';
+import { SituationRoomGateway } from './situation-room.gateway';
 import { SituationRoomService } from './situation-room.service';
 
 @ApiTags('incidents')
 @ApiBearerAuth('user-jwt')
 @Controller({ path: 'incidents', version: '1' })
 export class SituationRoomController {
+  private readonly logger = new Logger(SituationRoomController.name);
+
   constructor(
     private readonly rooms: SituationRoomService,
     private readonly proximity: ProximityService,
+    private readonly gateway: SituationRoomGateway,
   ) {}
 
   @Post()
   @ApiOperation({ summary: 'Manual emergency trigger → create Situation Room (PRD 6.5.2)' })
   async manualTrigger(@CurrentUser() u: AuthUser, @Body() dto: ManualTriggerDto) {
+    this.logger.log(
+      `Incident trigger by ${u.userId}, locationSource=${dto.locationSource ?? 'unknown'}`,
+    );
     const incident = await this.rooms.create({
       triggerType: TriggerType.MANUAL,
       incidentType: dto.incidentType,
       triggeringUserId: u.userId,
-      gps: dto.gps,
+      gps: dto.gps ?? null,
       occurredAt: dto.occurredAt ? new Date(dto.occurredAt) : new Date(),
       observerMode: false,
       reporterRole: dto.reporterRole ?? ReporterRole.INVOLVED,
@@ -44,10 +52,27 @@ export class SituationRoomController {
     return { incidentId: incident.incidentId, status: incident.status };
   }
 
+  @Get('mine/active')
+  @ApiOperation({ summary: "Caller's most recent non-terminal incident, if any" })
+  async myActiveIncident(@CurrentUser() u: AuthUser) {
+    const incident = await this.rooms.findActiveIncidentForTriggeringUser(u.userId);
+    return { incidentId: incident?.incidentId ?? null, status: incident?.status ?? null };
+  }
+
   @Post('location')
   @ApiOperation({ summary: 'Update my location (consent-gated; used for proximity)' })
   async updateLocation(@CurrentUser() u: AuthUser, @Body() dto: UpdateLocationDto) {
     await this.proximity.upsertLocation(u.userId, dto.gps.lat, dto.gps.lng, dto.gps.accuracyMeters);
+    const active = await this.rooms.findActiveIncidentForTriggeringUser(u.userId);
+    if (active) {
+      this.gateway.emitToIncident(active.incidentId, 'incident:location', {
+        userId: u.userId,
+        lat: dto.gps.lat,
+        lng: dto.gps.lng,
+        accuracyMeters: dto.gps.accuracyMeters ?? null,
+        at: new Date().toISOString(),
+      });
+    }
     return { ok: true };
   }
 

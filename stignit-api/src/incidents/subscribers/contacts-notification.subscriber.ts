@@ -40,7 +40,10 @@ export class ContactsNotificationSubscriber implements OnModuleInit {
       .from(emergencyContacts)
       .where(and(eq(emergencyContacts.userId, event.triggeringUserId), eq(emergencyContacts.optedOut, false)))
       .orderBy(emergencyContacts.priority);
-    const body = `Stignit alert: someone you're an emergency contact for may need help. Location: https://maps.google.com/?q=${event.gps.lat},${event.gps.lng}`;
+    const locationText = event.gps
+      ? `https://maps.google.com/?q=${event.gps.lat},${event.gps.lng}`
+      : 'not available yet — will update as soon as we get one';
+    const body = `Stignit alert: someone you're an emergency contact for may need help. Location: ${locationText}`;
 
     await this.notifications.enqueueMany(
       contacts.map((c) => ({ channel: 'sms' as const, to: c.phoneNumber, body })),

@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { Queue } from 'bullmq';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 import { DRIZZLE, type Db } from '../database/drizzle.module';
 import { ActionType, IncidentStatus, IncidentType, ReporterRole, TriggerType } from '../database/enums';
 import { incidentParticipants, incidents, type Incident, type IncidentParticipant } from '../database/schema';
@@ -19,7 +19,7 @@ export interface CreateSituationRoomInput {
   triggerType: TriggerType;
   incidentType: IncidentType;
   triggeringUserId: string | null;
-  gps: { lat: number; lng: number; accuracyMeters?: number };
+  gps: { lat: number; lng: number; accuracyMeters?: number } | null;
   occurredAt: Date;
   observerMode: boolean;
   reporterRole: ReporterRole;
@@ -71,21 +71,26 @@ export class SituationRoomService {
       reporterRole: input.reporterRole,
     });
 
-    await this.runProximity(incident, input.triggeringUserId ?? undefined);
+    if (input.gps) {
+      await this.runProximity(incident, input.triggeringUserId ?? undefined);
+    }
     return incident;
   }
 
   private async insertWithUniqueId(input: CreateSituationRoomInput): Promise<Incident> {
     for (let attempt = 0; attempt < 5; attempt++) {
       const incidentId = generateIncidentId();
+      const geom = input.gps
+        ? sql`ST_SetSRID(ST_MakePoint(${input.gps.lng}, ${input.gps.lat}),4326)::geography`
+        : sql`NULL`;
       try {
         await this.db.execute(sql`
           INSERT INTO incidents
             (incident_id, triggering_user_id, trigger_type, reporter_role, incident_type, status,
              gps_lat, gps_lng, gps_accuracy_meters, geom, occurred_at, synced_at, created_at)
           VALUES (${incidentId}, ${input.triggeringUserId}, ${input.triggerType}, ${input.reporterRole}, ${input.incidentType}, 'ACTIVE',
-             ${input.gps.lat}, ${input.gps.lng}, ${input.gps.accuracyMeters ?? null},
-             ST_SetSRID(ST_MakePoint(${input.gps.lng}, ${input.gps.lat}),4326)::geography,
+             ${input.gps?.lat ?? null}, ${input.gps?.lng ?? null}, ${input.gps?.accuracyMeters ?? null},
+             ${geom},
              ${input.occurredAt}, ${input.syncedAt ?? null}, now())
         `);
         return first(await this.db.select().from(incidents).where(eq(incidents.incidentId, incidentId)).limit(1))!;
@@ -101,6 +106,7 @@ export class SituationRoomService {
   }
 
   private async runProximity(incident: Incident, excludeUserId?: string): Promise<void> {
+    if (incident.gpsLat === null || incident.gpsLng === null) return;
     const { users, radiusMeters } = await this.proximity.findNearby(
       parseFloat(incident.gpsLat),
       parseFloat(incident.gpsLng),
@@ -179,6 +185,21 @@ export class SituationRoomService {
       await this.events.publish({ type: EventType.INCIDENT_CLOSED, incidentId, finalStatus: to });
     }
     return updated;
+  }
+
+  findActiveIncidentForTriggeringUser(userId: string): Promise<Incident | null> {
+    return this.db
+      .select()
+      .from(incidents)
+      .where(
+        and(
+          eq(incidents.triggeringUserId, userId),
+          notInArray(incidents.status, TERMINAL_STATES),
+        ),
+      )
+      .orderBy(desc(incidents.createdAt))
+      .limit(1)
+      .then(first);
   }
 
   findById(incidentId: string): Promise<Incident | null> {

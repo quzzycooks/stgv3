@@ -15,7 +15,7 @@ export interface SituationRoomCreatedEvent {
   incidentId: string;
   incidentType: IncidentType;
   triggeringUserId: string | null;
-  gps: { lat: number; lng: number; accuracyMeters?: number };
+  gps: { lat: number; lng: number; accuracyMeters?: number } | null;
   occurredAt: string;
   observerMode: boolean; // true when created via escalation (no explicit NEED_HELP)
   reporterRole: ReporterRole; // WITNESS = bystander; gates emergency-contact notification
