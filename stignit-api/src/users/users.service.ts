@@ -42,6 +42,7 @@ export class UsersService {
         stateLga: dto.stateLga,
         profilePhotoUrl: dto.profilePhotoUrl ?? null,
         medicalInfo: (dto.medicalInfo ?? null) as Record<string, unknown> | null,
+        medicalInfoComplete: dto.medicalInfo !== undefined,
         accountStatus: AccountStatus.ACTIVE,
       })
       .where(eq(users.id, userId));
@@ -70,6 +71,7 @@ export class UsersService {
       skillVerified: user.skillVerified,
       accountStatus: user.accountStatus,
       medicalInfo: user.medicalInfo, // self may view own medical info
+      medicalInfoComplete: user.medicalInfoComplete,
       emergencyContacts: contacts.map((c) => ({
         id: c.id,
         name: c.name,
@@ -88,7 +90,10 @@ export class UsersService {
     if (dto.stateLga !== undefined) patch.stateLga = dto.stateLga;
     if (dto.profilePhotoUrl !== undefined) patch.profilePhotoUrl = dto.profilePhotoUrl;
     if (dto.welfareCheckDelaySec !== undefined) patch.welfareCheckDelaySec = dto.welfareCheckDelaySec;
-    if (dto.medicalInfo !== undefined) patch.medicalInfo = dto.medicalInfo;
+    if (dto.medicalInfo !== undefined) {
+      patch.medicalInfo = dto.medicalInfo;
+      patch.medicalInfoComplete = true;
+    }
     if (Object.keys(patch).length === 0) return;
     const updated = await this.db.update(users).set(patch).where(eq(users.id, userId)).returning({ id: users.id });
     if (updated.length === 0) throw new NotFoundException();

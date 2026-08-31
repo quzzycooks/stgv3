@@ -83,6 +83,7 @@ export const users = pgTable('users', {
     .notNull()
     .default(SkillVerificationStatus.NONE),
   skillVerified: boolean('skill_verified').notNull().default(false),
+  medicalInfoComplete: boolean('medical_info_complete').notNull().default(false),
   accountStatus: accountStatusEnum('account_status').notNull().default(AccountStatus.INCOMPLETE),
   deletionRequestedAt: ts('deletion_requested_at'),
   createdAt: ts('created_at').notNull().defaultNow(),
