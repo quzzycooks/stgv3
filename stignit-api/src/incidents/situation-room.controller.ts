@@ -59,6 +59,21 @@ export class SituationRoomController {
     return { incidentId: incident?.incidentId ?? null, status: incident?.status ?? null };
   }
 
+  // Must stay ahead of the ':incidentId' route below — 'mine' would otherwise
+  // be swallowed as a param value.
+  @Get('mine')
+  @ApiOperation({ summary: "Caller's own incident history, most recent first" })
+  async myIncidents(@CurrentUser() u: AuthUser) {
+    const rows = await this.rooms.listForTriggeringUser(u.userId);
+    return rows.map((i) => ({
+      incidentId: i.incidentId,
+      incidentType: i.incidentType,
+      status: i.status,
+      createdAt: i.createdAt,
+      closedAt: i.closedAt,
+    }));
+  }
+
   @Post('location')
   @ApiOperation({ summary: 'Update my location (consent-gated; used for proximity)' })
   async updateLocation(@CurrentUser() u: AuthUser, @Body() dto: UpdateLocationDto) {

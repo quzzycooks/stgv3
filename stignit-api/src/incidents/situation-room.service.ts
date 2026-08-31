@@ -202,6 +202,16 @@ export class SituationRoomService {
       .then(first);
   }
 
+  /** Caller's own incident history (most recent first) — backs the welfare-check history screen. */
+  listForTriggeringUser(userId: string, limit = 50): Promise<Incident[]> {
+    return this.db
+      .select()
+      .from(incidents)
+      .where(eq(incidents.triggeringUserId, userId))
+      .orderBy(desc(incidents.createdAt))
+      .limit(limit);
+  }
+
   findById(incidentId: string): Promise<Incident | null> {
     return this.db
       .select()
