@@ -1,5 +1,5 @@
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { SmsService } from '../notification/sms.service';
@@ -89,7 +89,12 @@ export class OtpService {
       // rather than being stuck behind a cooldown for a code they never got.
       await this.redis.del(this.otpKey(phoneHash), this.cooldownKey(phoneHash));
       this.logger.error(`OTP SMS delivery failed: ${(err as Error).message}`);
-      throw err;
+      // The raw carrier error (e.g. a DND-list rejection) isn't something the
+      // caller did wrong — surface a clear, actionable message instead of
+      // letting it fall through as an opaque 500.
+      throw new ServiceUnavailableException(
+        "We couldn't send a text to that number right now. Try again in a moment, or sign in with email instead.",
+      );
     }
 
     // In production the code is delivered ONLY via SMS (Africa's Talking). Never logged.
